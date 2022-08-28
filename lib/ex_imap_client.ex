@@ -1,6 +1,6 @@
-defmodule ExImap.Client do
+defmodule ExImapClient do
   @moduledoc """
-  Documentation for `ExImap.Client`.
+  Documentation for `ExImapClient`.
   """
 
   @doc """
@@ -8,7 +8,7 @@ defmodule ExImap.Client do
 
   ## Examples
 
-      iex> ExImap.Client.hello()
+      iex> ExImapClient.hello()
       :world
 
   """

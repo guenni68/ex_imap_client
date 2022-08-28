@@ -1,9 +1,9 @@
-defmodule ExImap.Client.MixProject do
+defmodule ExImapClient.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :elixir_imap,
+      app: :ex_imap_client,
       version: "0.1.0",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
@@ -15,15 +15,15 @@ defmodule ExImap.Client.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {ExImap.Client.Application, []}
+      mod: {ExImapClient.Application, []}
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:gen_state_machine, "~> 3.0"},
+      {:imap_response_parser, in_umbrella: true}
     ]
   end
 end
