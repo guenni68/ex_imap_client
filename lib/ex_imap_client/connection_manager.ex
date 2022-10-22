@@ -2,8 +2,7 @@ defmodule ExImapClient.ConnectionManager do
   @moduledoc false
 
   alias ExImapClient.{
-    ClientConnection,
-    Data
+    ClientConnection
   }
 
   def start_link() do

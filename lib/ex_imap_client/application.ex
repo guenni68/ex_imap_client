@@ -7,14 +7,16 @@ defmodule ExImapClient.Application do
 
   alias ExImapClient.{
     ProcessRegistry,
-    ConnectionManager
+    ConnectionManager,
+    ResponseTracer
   }
 
   @impl true
   def start(_type, _args) do
     children = [
       ProcessRegistry,
-      ConnectionManager
+      ConnectionManager,
+      {ResponseTracer, "notes/debug"}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
