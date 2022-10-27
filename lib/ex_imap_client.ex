@@ -76,7 +76,13 @@ defmodule ExImapClient do
   end
 
   defp send_to_server(identifier, command_string, timeout \\ 5_000) do
-    ClientConnection.send_to_server(identifier, command_string, timeout)
+    case ClientConnection.send_to_server(identifier, command_string, timeout) do
+      {:ok, ast} ->
+        ExImapClient.ResponseParser.transform_ast(ast)
+
+      error ->
+        error
+    end
   end
 
   defp make_identifier(hostname, port) do

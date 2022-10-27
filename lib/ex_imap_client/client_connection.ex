@@ -47,14 +47,15 @@ defmodule ExImapClient.ClientConnection do
     {:ok, @disconnected, new_data()}
   end
 
+  # calls
   @impl GenStateMachine
   def handle_event(
         {:call, from},
         {@connect_tcp, hostname, port},
         @disconnected,
-        data
+        _data
       ) do
-    actions = [{:next_event, :internal, {@connect_tcp, hostname, port, from}}]
+    actions = [{:next_event, :internal, {:connect, :tcp, hostname, port, from}}]
 
     {:keep_state_and_data, actions}
   end
@@ -62,74 +63,13 @@ defmodule ExImapClient.ClientConnection do
   @impl GenStateMachine
   def handle_event(
         {:call, from},
-        {connect_type, hostname, port},
+        {@connect_ssl, hostname, port},
         @disconnected,
-        data
+        _data
       ) do
-    actions = [{:next_event, :internal, {connect_type, hostname, port, from}}]
+    actions = [{:next_event, :internal, {:connect, :ssl, hostname, port, from}}]
 
     {:keep_state_and_data, actions}
-  end
-
-  @impl GenStateMachine
-  def handle_event(
-        :internal,
-        {connect_type, hostname, port, from},
-        @disconnected,
-        data
-      ) do
-    parser = response_parser_from_rule("greeting")
-
-    {_tag, handler} =
-      Handler.new()
-      |> Handler.handle_request(from, parser)
-
-    hostname_charlist =
-      hostname
-      |> String.to_charlist()
-
-    opts = [:binary, active: true]
-
-    updated_data =
-      data
-      |> set_hostname(hostname)
-      |> set_port(port)
-
-    case connect_type do
-      @connect_ssl ->
-        {:ok, socket} = :ssl.connect(hostname_charlist, port, opts)
-        {:next_state, {@connected_ssl, socket, handler}, updated_data}
-
-      @connect_tcp ->
-        {:ok, socket} = :gen_tcp.connect(hostname_charlist, port, opts)
-        {:next_state, {@connected_tcp, socket, handler}, updated_data}
-    end
-  end
-
-  @impl GenStateMachine
-  def handle_event(:info, {:tcp, tcp, message}, {@connected_tcp, tcp, handler}, data) do
-    {actions, new_handler} = handle_response(message, handler)
-    {:next_state, {@connected_tcp, tcp, new_handler}, data, actions}
-  end
-
-  @impl GenStateMachine
-  def handle_event(:info, {:ssl, ssl, message}, {@connected_ssl, ssl, handler}, data) do
-    {actions, new_handler} = handle_response(message, handler)
-    {:next_state, {@connected_ssl, ssl, new_handler}, data, actions}
-  end
-
-  @impl GenStateMachine
-  def handle_event(:info, {:tcp_closed, tcp}, {@connected_tcp, tcp, handler}, data) do
-    # TODO
-    actions = []
-    {:next_state, @disconnected, new_data(), actions}
-  end
-
-  @impl GenStateMachine
-  def handle_event(:info, {:ssl_closed, ssl}, {@connected_ssl, ssl, handler}, data) do
-    # TODO
-    actions = []
-    {:next_state, @disconnected, new_data(), actions}
   end
 
   @impl GenStateMachine
@@ -158,6 +98,105 @@ defmodule ExImapClient.ClientConnection do
     {:next_state, {connection_type, socket, new_handler}, data}
   end
 
+  # internal
+  @impl GenStateMachine
+  def handle_event(
+        :internal,
+        {:connect, connection_type, hostname, port, from},
+        @disconnected,
+        data
+      ) do
+    parser = response_parser_from_rule("greeting")
+
+    {_tag, handler} =
+      Handler.new()
+      |> Handler.handle_request(from, parser)
+
+    hostname_charlist =
+      hostname
+      |> String.to_charlist()
+
+    opts = [:binary, active: true]
+
+    updated_data =
+      data
+      |> set_hostname(hostname)
+      |> set_port(port)
+
+    case connection_type do
+      :ssl ->
+        case :ssl.connect(hostname_charlist, port, opts) do
+          {:ok, socket} ->
+            {:next_state, {@connected_ssl, socket, handler}, updated_data}
+
+          error ->
+            actions = [
+              {:reply, from, {:error, error}}
+            ]
+
+            {:keep_state_and_data, actions}
+        end
+
+      :tcp ->
+        case :gen_tcp.connect(hostname_charlist, port, opts) do
+          {:ok, socket} ->
+            {:next_state, {@connected_tcp, socket, handler}, updated_data}
+
+          {:error, _reason} = error ->
+            actions = [
+              {:reply, from, error}
+            ]
+
+            {:keep_state_and_data, actions}
+        end
+    end
+  end
+
+  # info
+  @impl GenStateMachine
+  def handle_event(:info, {:tcp, tcp, message}, {@connected_tcp, tcp, handler}, data) do
+    {actions, new_handler} = handle_response(message, handler)
+    {:next_state, {@connected_tcp, tcp, new_handler}, data, actions}
+  end
+
+  @impl GenStateMachine
+  def handle_event(:info, {:ssl, ssl, message}, {@connected_ssl, ssl, handler}, data) do
+    {actions, new_handler} = handle_response(message, handler)
+    {:next_state, {@connected_ssl, ssl, new_handler}, data, actions}
+  end
+
+  @impl GenStateMachine
+  def handle_event(
+        :info,
+        {:tcp_closed, tcp},
+        {@connected_tcp, tcp, handler},
+        %{hostname: hostname, port: port}
+      ) do
+    actions = [
+      {:next_event, :internal, {:cleanup, handler}},
+      {:next_event, :internal, {:reconnect_tcp, hostname, port}}
+    ]
+
+    {:next_state, @disconnected, new_data(), actions}
+  end
+
+  @impl GenStateMachine
+  def handle_event(
+        :info,
+        {:ssl_closed, ssl},
+        {@connected_ssl, ssl, handler},
+        %{hostname: hostname, port: port}
+      ) do
+    actions = [
+      {:next_event, :internal, {:cleanup, handler}},
+      {:next_event, :internal, {:reconnect_ssl, hostname, port}}
+    ]
+
+    {:next_state, @disconnected, new_data(), actions}
+  end
+
+  # helpers
+
   defp handle_response(response, handler) do
     ResponseTracer.trace_response(response)
 
@@ -183,7 +222,7 @@ defmodule ExImapClient.ClientConnection do
 
   defp response_parser_from_rule(rule_name \\ "response") do
     fn overrides ->
-      ImapResponseParser.from_rule_name(overrides, rule_name)
+      ExImapClient.ResponseParser.from_rule_name(overrides, rule_name)
     end
   end
 

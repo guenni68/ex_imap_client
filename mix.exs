@@ -26,7 +26,7 @@ defmodule ExImapClient.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:imap_response_parser, in_umbrella: true},
+      {:parser_builder, "~> 1.2"},
       {:gen_state_machine, "~> 3.0"}
     ]
   end
