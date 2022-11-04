@@ -54,7 +54,7 @@ defmodule ExImapClient do
     fetch(identifier, from, from, macro)
   end
 
-  def fetch(identifier, from, to, macro \\ "ENVELOPE", time_out \\ :infinity) do
+  def fetch(identifier, from, to, macro \\ "ENVELOPE", time_out \\ 50_000) do
     send_to_server(identifier, "FETCH #{from}:#{to} #{macro}", time_out)
   end
 
