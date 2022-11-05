@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="US-ASCII" ?>
+<tests xmlns="http://elixir.parserbuilder.com/test_cases/v1.0.0">
+  <test rule="ALPHA">
+    <pass input="A"/>
+    <fail input="0"/>
+  </test>
+</tests>

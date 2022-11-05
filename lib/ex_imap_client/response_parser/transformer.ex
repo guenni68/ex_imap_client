@@ -70,7 +70,7 @@ defmodule ExImapClient.ResponseParser.Transformer do
     iterate(kids ++ [callback | rest])
   end
 
-  defp iterate(results, [{:xx_key_value, kids} | rest]) do
+  defp iterate(results, [{:xx_key_value_pair, kids} | rest]) do
     callback =
       fn [%{key: [key], value: value}] ->
         [{key, value} | results]
@@ -98,9 +98,7 @@ defmodule ExImapClient.ResponseParser.Transformer do
         [%{date: [date], time: [time], offset: [offset]}], stack ->
           {:ok, dt} = DateTime.new(date, time)
 
-          dt =
-            dt
-            |> DateTime.add(offset, :minute)
+          dt = add_offset(dt, offset, :minute)
 
           {[dt | results], stack}
 
@@ -316,5 +314,9 @@ defmodule ExImapClient.ResponseParser.Transformer do
 
   defp add_key(map, key, value) do
     add_key(map, key, [value])
+  end
+
+  defp add_offset(date_time, offset, :minute) do
+    DateTime.add(date_time, offset * 60, :second)
   end
 end

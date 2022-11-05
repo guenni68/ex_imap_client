@@ -1,11 +1,48 @@
 <?xml version="1.0" encoding="US-ASCII"?>
 <grammar xmlns="http://elixir.parserbuilder.com/v1.1.0">
+  <!-- Testing -->
+  <rule id="test_conversation1">
+    <oneOf>
+      <item>
+        <tag name="xx_partial">
+          <literal value="partial"/>
+        </tag>
+      </item>
+      <item>
+        <tag name="xx_final">
+          <literal value="final"/>
+        </tag>
+      </item>
+    </oneOf>
+  </rule>
+  <!-- Testing -->
+  <!-- Convenience -->
+  <rule id="conversation">
+    <oneOf>
+      <item>
+        <tag name="xx_partial">
+          <untagAndFlatten>
+            <ruleRef uri="continue"/>
+          </untagAndFlatten>
+        </tag>
+      </item>
+      <item>
+        <tag name="xx_final">
+          <ruleRef uri="response"/>
+        </tag>
+      </item>
+    </oneOf>
+  </rule>
   <rule id="greeting" postprocess="tag">
     <ruleRef uri="rfc3501_greeting"/>
   </rule>
   <rule id="response">
-    <ruleRef uri="rfc3501_response"/>
+    <ruleRef uri="rfc3501_response-only"/>
   </rule>
+  <rule id="continue">
+    <ruleRef uri="rfc3501_continue-req"/>
+  </rule>
+  <!-- Convenience -->
   <!-- RFC 3501 -->
   <rule id="rfc3501_address">
     <tag name="xx_key_value_map">
@@ -115,7 +152,7 @@
       </item>
     </oneOf>
   </rule>
-  <rule id="rfc3501_atom-specials" postprocess="tag">
+  <rule id="rfc3501_atom-specials">
     <oneOf>
       <item>
         <literal value="("/>
@@ -277,19 +314,15 @@
     </optional>
   </rule>
   <rule id="rfc3501_body-fields">
-    <tag name="fields">
-      <tag name="xx_key_value_map">
-        <ruleRef uri="rfc3501_body-fld-param"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_body-fld-id"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_body-fld-desc"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_body-fld-enc"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_body-fld-octets"/>
-      </tag>
-    </tag>
+    <ruleRef uri="rfc3501_body-fld-param"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_body-fld-id"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_body-fld-desc"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_body-fld-enc"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_body-fld-octets"/>
   </rule>
   <rule id="rfc3501_body-fld-desc">
     <tag name="desc">
@@ -416,91 +449,107 @@
     </tag>
   </rule>
   <rule id="rfc3501_body-type-1part">
-    <tag name="body-type-1part">
-      <tag name="xx_key_value_map">
-        <oneOf>
-          <item>
-            <ruleRef uri="rfc3501_body-type-basic"/>
-          </item>
-          <item>
-            <ruleRef uri="rfc3501_body-type-msg"/>
-          </item>
-          <item>
-            <ruleRef uri="rfc3501_body-type-text"/>
-          </item>
-        </oneOf>
-        <optional>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_body-ext-1part"/>
-        </optional>
-      </tag>
-    </tag>
-  </rule>
-  <rule id="rfc3501_body-type-basic" postprocess="tag">
-    <ruleRef uri="rfc3501_media-basic"/>
-    <ruleRef uri="SP"/>
-    <ruleRef uri="rfc3501_body-fields"/>
-  </rule>
-  <rule id="rfc3501_body-type-mpart" postprocess="tag">
-    <manyOne>
-      <ruleRef uri="rfc3501_body"/>
-    </manyOne>
-    <ruleRef uri="SP"/>
-    <tag name="media-subtype">
-      <ruleRef uri="rfc3501_media-subtype"/>
-    </tag>
-    <optional>
-      <ruleRef uri="SP"/>
-      <ruleRef uri="rfc3501_body-ext-mpart"/>
-    </optional>
-  </rule>
-  <rule id="rfc3501_body-type-msg" postprocess="tag">
-    <ruleRef uri="rfc3501_media-message"/>
-    <ruleRef uri="SP"/>
-    <ruleRef uri="rfc3501_body-fields"/>
-    <ruleRef uri="SP"/>
-    <ruleRef uri="rfc3501_envelope"/>
-    <ruleRef uri="SP"/>
-    <ruleRef uri="rfc3501_body"/>
-    <ruleRef uri="SP"/>
-    <ruleRef uri="rfc3501_body-fld-lines"/>
-  </rule>
-  <rule id="rfc3501_body-type-text">
-    <tag name="body-type-text">
-      <tag name="xx_key_value_map">
-        <ruleRef uri="rfc3501_media-text"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_body-fields"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_body-fld-lines"/>
-      </tag>
-    </tag>
-  </rule>
-  <rule id="rfc3501_capability" postprocess="tag">
     <oneOf>
       <item>
-        <literal value="AUTH="/>
-        <ruleRef uri="rfc3501_auth-type"/>
+        <ruleRef uri="rfc3501_body-type-basic"/>
       </item>
       <item>
-        <ruleRef uri="rfc3501_atom"/>
+        <ruleRef uri="rfc3501_body-type-msg"/>
+      </item>
+      <item>
+        <ruleRef uri="rfc3501_body-type-text"/>
+      </item>
+    </oneOf>
+    <optional>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_body-ext-1part"/>
+    </optional>
+  </rule>
+  <rule id="rfc3501_body-type-basic">
+    <tag name="xx_key_value_map">
+      <ruleRef uri="rfc3501_media-basic"/>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_body-fields"/>
+    </tag>
+  </rule>
+  <rule id="rfc3501_body-type-mpart">
+    <tag name="xx_key_value_map">
+      <tag name="parts">
+        <manyOne>
+          <ruleRef uri="rfc3501_body"/>
+        </manyOne>
+      </tag>
+      <ruleRef uri="SP"/>
+      <tag name="media-subtype">
+        <ruleRef uri="rfc3501_media-subtype"/>
+      </tag>
+      <optional>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_body-ext-mpart"/>
+      </optional>
+    </tag>
+  </rule>
+  <rule id="rfc3501_body-type-msg">
+    <tag name="xx_key_value_map">
+      <ruleRef uri="rfc3501_media-message"/>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_body-fields"/>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_envelope"/>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_body"/>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_body-fld-lines"/>
+    </tag>
+  </rule>
+  <rule id="rfc3501_body-type-text">
+    <tag name="xx_key_value_map">
+      <ruleRef uri="rfc3501_media-text"/>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_body-fields"/>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_body-fld-lines"/>
+    </tag>
+  </rule>
+  <rule id="rfc3501_capability">
+    <oneOf>
+      <item>
+        <tag name="auth-type">
+          <ignore>
+            <literal value="AUTH="/>
+          </ignore>
+          <untagAndFlatten>
+            <ruleRef uri="rfc3501_auth-type"/>
+          </untagAndFlatten>
+        </tag>
+      </item>
+      <item>
+        <tag name="capability">
+          <ruleRef uri="rfc3501_atom"/>
+        </tag>
       </item>
     </oneOf>
   </rule>
-  <rule id="rfc3501_capability-data" postprocess="tag">
-    <ignore>
-      <literal value="CAPABILITY"/>
-    </ignore>
-    <many>
-      <ruleRef uri="SP"/>
-      <ruleRef uri="rfc3501_capability"/>
-    </many>
-    <ruleRef uri="SP"/>
-    <literal value="IMAP4rev1"/>
-    <many>
-      <ruleRef uri="SP"/>
-      <ruleRef uri="rfc3501_capability"/>
-    </many>
+  <rule id="rfc3501_capability-data">
+    <tag name="capabilities">
+      <tag name="xx_key_value_map">
+        <ignore>
+          <literal value="CAPABILITY"/>
+        </ignore>
+        <many>
+          <ruleRef uri="SP"/>
+          <ruleRef uri="rfc3501_capability"/>
+        </many>
+        <ruleRef uri="SP"/>
+        <ignore>
+          <literal value="IMAP4rev1"/>
+        </ignore>
+        <many>
+          <ruleRef uri="SP"/>
+          <ruleRef uri="rfc3501_capability"/>
+        </many>
+      </tag>
+    </tag>
   </rule>
   <rule id="rfc3501_CHAR8" postprocess="tag">
     <hexRange start="01" end="ff"/>
@@ -784,35 +833,31 @@
     <hexRange start="31" end="39"/>
   </rule>
   <rule id="rfc3501_envelope">
-    <tag name="envelope">
-      <tag name="xx_key_value_map">
-        <ignore>
-          <literal value="("/>
-        </ignore>
-        <ruleRef uri="rfc3501_env-date"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_env-subject"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_env-from"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_env-sender"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_env-reply-to"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_env-to"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_env-cc"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_env-bcc"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_env-in-reply-to"/>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_env-message-id"/>
-        <ignore>
-          <literal value=")"/>
-        </ignore>
-      </tag>
-    </tag>
+    <ignore>
+      <literal value="("/>
+    </ignore>
+    <ruleRef uri="rfc3501_env-date"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_env-subject"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_env-from"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_env-sender"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_env-reply-to"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_env-to"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_env-cc"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_env-bcc"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_env-in-reply-to"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_env-message-id"/>
+    <ignore>
+      <literal value=")"/>
+    </ignore>
   </rule>
   <rule id="rfc3501_env-bcc">
     <tag name="bcc">
@@ -825,20 +870,18 @@
     </tag>
   </rule>
   <rule id="rfc3501_env-date">
-    <oneOf>
-      <item>
-        <tag name="date-parsed">
+    <tag name="date">
+      <oneOf>
+        <item>
           <ruleRef uri="DQUOTE"/>
           <ruleRef uri="aux_env-date"/>
           <ruleRef uri="DQUOTE"/>
-        </tag>
-      </item>
-      <item>
-        <tag name="date-text">
+        </item>
+        <item>
           <ruleRef uri="rfc3501_nstring"/>
-        </tag>
-      </item>
-    </oneOf>
+        </item>
+      </oneOf>
+    </tag>
   </rule>
   <rule id="rfc3501_env-from">
     <tag name="from">
@@ -882,7 +925,7 @@
     <ruleRef uri="SP"/>
     <ruleRef uri="rfc3501_mailbox"/>
   </rule>
-  <rule id="rfc3501_fetch">
+  <rule id="rfc3501_fetch" postprocess="tag">
     <ignore>
       <literal value="FETCH"/>
     </ignore>
@@ -1016,79 +1059,74 @@
     </oneOf>
   </rule>
   <rule id="rfc3501_flag">
-    <tag name="xx_symbol">
-      <oneOf>
-        <item>
-          <replace value="Answered">
-            <literal value="\Answered"/>
-          </replace>
-        </item>
-        <item>
-          <replace value="Flagged">
-            <literal value="\Flagged"/>
-          </replace>
-        </item>
-        <item>
-          <replace value="Deleted">
-            <literal value="\Deleted"/>
-          </replace>
-        </item>
-        <item>
-          <replace value="Seen">
-            <literal value="\Seen"/>
-          </replace>
-        </item>
-        <item>
-          <replace value="Draft">
-            <literal value="\Draft"/>
-          </replace>
-        </item>
-        <item>
-          <ruleRef uri="rfc3501_flag-keyword"/>
-        </item>
-        <item>
-          <ruleRef uri="rfc3501_flag-extension"/>
-        </item>
-      </oneOf>
-    </tag>
+    <oneOf>
+      <item>
+        <replace value="Answered">
+          <literal value="\Answered"/>
+        </replace>
+      </item>
+      <item>
+        <replace value="Flagged">
+          <literal value="\Flagged"/>
+        </replace>
+      </item>
+      <item>
+        <replace value="Deleted">
+          <literal value="\Deleted"/>
+        </replace>
+      </item>
+      <item>
+        <replace value="Seen">
+          <literal value="\Seen"/>
+        </replace>
+      </item>
+      <item>
+        <replace value="Draft">
+          <literal value="\Draft"/>
+        </replace>
+      </item>
+      <item>
+        <ruleRef uri="rfc3501_flag-keyword"/>
+      </item>
+      <item>
+        <ruleRef uri="rfc3501_flag-extension"/>
+      </item>
+    </oneOf>
   </rule>
-  <rule id="rfc3501_flag-extension">
-    <ignore>
-      <literal value="\"/>
-    </ignore>
-    <ruleRef uri="rfc3501_atom"/>
+  <rule id="rfc3501_flag-extension" postprocess="tag">
+    <ruleRef uri="rfc3501_flag-extension-tagless"/>
   </rule>
-  <rule id="rfc3501_flag-fetch">
+  <rule id="rfc3501_flag-fetch" postprocess="tag">
     <oneOf>
       <item>
         <ruleRef uri="rfc3501_flag"/>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="Recent">
-            <literal value="\Recent"/>
-          </replace>
-        </tag>
+        <replace value="Recent">
+          <literal value="\Recent"/>
+        </replace>
       </item>
     </oneOf>
   </rule>
   <rule id="rfc3501_flag-keyword">
     <ruleRef uri="rfc3501_atom"/>
   </rule>
-  <rule id="rfc3501_flag-list" postprocess="tag">
-    <ignore>
-      <literal value="("/>
-    </ignore>
-    <optional>
-      <ruleRef uri="rfc3501_flag"/>
-      <many>
-        <ruleRef uri="SP"/>
+  <rule id="rfc3501_flag-list">
+    <tag name="flags">
+      <ignore>
+        <literal value="("/>
+      </ignore>
+      <optional>
         <ruleRef uri="rfc3501_flag"/>
-      </many>
-    </optional>
-    <ignore>
-      <literal value=")"/>
-    </ignore>
+        <many>
+          <ruleRef uri="SP"/>
+          <ruleRef uri="rfc3501_flag"/>
+        </many>
+      </optional>
+      <ignore>
+        <literal value=")"/>
+      </ignore>
+    </tag>
   </rule>
   <rule id="rfc3501_flag-perm" postprocess="tag">
     <oneOf>
@@ -1107,7 +1145,9 @@
     <ruleRef uri="SP"/>
     <oneOf>
       <item>
-        <ruleRef uri="rfc3501_resp-cond-auth"/>
+        <ruleRef uri="rfc3501_resp-cond-auth-prefix"/>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_resp-text-tagless"/>
       </item>
       <item>
         <ruleRef uri="rfc3501_resp-cond-bye"/>
@@ -1224,7 +1264,9 @@
     <tag name="mailbox">
       <oneOf>
         <item>
-          <literal value="INBOX"/>
+          <replace value="INBOX">
+            <literal value="INBOX"/>
+          </replace>
         </item>
         <item>
           <ruleRef uri="rfc3501_astring"/>
@@ -1233,30 +1275,30 @@
     </tag>
   </rule>
   <rule id="rfc3501_mailbox-data">
-    <tag name="xx_key_value_map">
-      <oneOf>
-        <item>
-          <ignore>
-            <literal value="FLAGS"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_flag-list"/>
-        </item>
-        <item>
-          <ignore>
-            <literal value="LIST"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_mailbox-list"/>
-        </item>
-        <item>
-          <ignore>
-            <literal value="LSUB"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_mailbox-list"/>
-        </item>
-        <item>
+    <oneOf>
+      <item>
+        <ignore>
+          <literal value="FLAGS"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_flag-list"/>
+      </item>
+      <item>
+        <ignore>
+          <literal value="LIST"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_mailbox-list"/>
+      </item>
+      <item>
+        <ignore>
+          <literal value="LSUB"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_mailbox-list"/>
+      </item>
+      <item>
+        <tag name="search">
           <ignore>
             <literal value="SEARCH"/>
           </ignore>
@@ -1264,66 +1306,78 @@
             <ruleRef uri="SP"/>
             <ruleRef uri="rfc3501_nz-number"/>
           </many>
-        </item>
-        <item>
-          <ignore>
-            <literal value="STATUS"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_mailbox"/>
-          <ruleRef uri="SP"/>
-          <ignore>
-            <literal value="("/>
-          </ignore>
-          <optional>
-            <ruleRef uri="rfc3501_status-att-list"/>
-          </optional>
-          <ignore>
-            <literal value=")"/>
-          </ignore>
-        </item>
-        <item>
+        </tag>
+      </item>
+      <item>
+        <tag name="status">
+          <tag name="xx_key_value_map">
+            <ignore>
+              <literal value="STATUS"/>
+            </ignore>
+            <ruleRef uri="SP"/>
+            <ruleRef uri="rfc3501_mailbox"/>
+            <ruleRef uri="SP"/>
+            <ignore>
+              <literal value="("/>
+            </ignore>
+            <optional>
+              <ruleRef uri="rfc3501_status-att-list"/>
+            </optional>
+            <ignore>
+              <literal value=")"/>
+            </ignore>
+          </tag>
+        </tag>
+      </item>
+      <item>
+        <tag name="exists">
           <ruleRef uri="rfc3501_number"/>
           <ruleRef uri="SP"/>
           <ignore>
             <literal value="EXISTS"/>
           </ignore>
-        </item>
-        <item>
+        </tag>
+      </item>
+      <item>
+        <tag name="recent">
           <ruleRef uri="rfc3501_number"/>
           <ruleRef uri="SP"/>
           <ignore>
             <literal value="RECENT"/>
           </ignore>
-        </item>
-      </oneOf>
-    </tag>
-  </rule>
-  <rule id="rfc3501_mailbox-list">
-    <ignore>
-      <literal value="("/>
-    </ignore>
-    <optional>
-      <ruleRef uri="rfc3501_mbx-list-flags"/>
-    </optional>
-    <ignore>
-      <literal value=")"/>
-    </ignore>
-    <ruleRef uri="SP"/>
-    <oneOf>
-      <item>
-        <ruleRef uri="DQUOTE"/>
-        <ignore>
-          <ruleRef uri="rfc3501_QUOTED-CHAR"/>
-        </ignore>
-        <ruleRef uri="DQUOTE"/>
-      </item>
-      <item>
-        <ruleRef uri="rfc3501_nil"/>
+        </tag>
       </item>
     </oneOf>
-    <ruleRef uri="SP"/>
-    <ruleRef uri="rfc3501_mailbox"/>
+  </rule>
+  <rule id="rfc3501_mailbox-list">
+    <tag name="xx_key_value_map">
+      <ignore>
+        <literal value="("/>
+      </ignore>
+      <optional>
+        <ruleRef uri="rfc3501_mbx-list-flags"/>
+      </optional>
+      <ignore>
+        <literal value=")"/>
+      </ignore>
+      <ruleRef uri="SP"/>
+      <tag name="info">
+        <oneOf>
+          <item>
+            <ruleRef uri="DQUOTE"/>
+            <ignore>
+              <ruleRef uri="rfc3501_QUOTED-CHAR"/>
+            </ignore>
+            <ruleRef uri="DQUOTE"/>
+          </item>
+          <item>
+            <ruleRef uri="rfc3501_nil"/>
+          </item>
+        </oneOf>
+      </tag>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_mailbox"/>
+    </tag>
   </rule>
   <rule id="rfc3501_mbx-list-flags">
     <tag name="flags">
@@ -1352,71 +1406,65 @@
   <rule id="rfc3501_mbx-list-oflag">
     <oneOf>
       <item>
-        <tag name="xx_symbol">
-          <replace value="Noinferiors">
-            <literal value="\Noinferiors"/>
-          </replace>
-        </tag>
+        <replace value="Noinferiors">
+          <literal value="\Noinferiors"/>
+        </replace>
       </item>
       <item>
-        <ruleRef uri="rfc3501_flag-extension"/>
+        <ruleRef uri="rfc3501_flag-extension-tagless"/>
       </item>
     </oneOf>
   </rule>
   <rule id="rfc3501_mbx-list-sflag">
-    <tag name="xx_symbol">
-      <oneOf>
-        <item>
-          <replace value="Noselect">
-            <literal value="\Noselect"/>
-          </replace>
-        </item>
-        <item>
-          <replace value="Marked">
-            <literal value="\Marked"/>
-          </replace>
-        </item>
-        <item>
-          <replace value="Unmarked">
-            <literal value="\Unmarked"/>
-          </replace>
-        </item>
-      </oneOf>
-    </tag>
+    <oneOf>
+      <item>
+        <replace value="Noselect">
+          <literal value="\Noselect"/>
+        </replace>
+      </item>
+      <item>
+        <replace value="Marked">
+          <literal value="\Marked"/>
+        </replace>
+      </item>
+      <item>
+        <replace value="Unmarked">
+          <literal value="\Unmarked"/>
+        </replace>
+      </item>
+    </oneOf>
   </rule>
   <rule id="rfc3501_media-basic" postprocess="tag">
     <oneOf>
       <item>
         <ruleRef uri="DQUOTE"/>
-        <tag name="xx_symbol">
-          <oneOf>
-            <item>
-              <replace value="APPLICATION">
-                <literal value="APPLICATION"/>
-              </replace>
-            </item>
-            <item>
-              <replace value="AUDIO">
-                <literal value="AUDIO"/>
-              </replace>
-            </item>
-            <item>
-              <replace value="IMAGE">
-                <literal value="IMAGE"/>
-              </replace>
-            </item>
-            <item>
-              <replace value="MESSAGE">
-                <literal value="MESSAGE"/>
-              </replace>
-            </item>
-            <item>
-              <replace value="VIDEO">
-                <literal value="VIDEO"/>
-              </replace>
-            </item>
-          </oneOf>
-        </tag>
+        <oneOf>
+          <item>
+            <replace value="APPLICATION">
+              <literal value="APPLICATION"/>
+            </replace>
+          </item>
+          <item>
+            <replace value="AUDIO">
+              <literal value="AUDIO"/>
+            </replace>
+          </item>
+          <item>
+            <replace value="IMAGE">
+              <literal value="IMAGE"/>
+            </replace>
+          </item>
+          <item>
+            <replace value="MESSAGE">
+              <literal value="MESSAGE"/>
+            </replace>
+          </item>
+          <item>
+            <replace value="VIDEO">
+              <literal value="VIDEO"/>
+            </replace>
+          </item>
+        </oneOf>
         <ruleRef uri="DQUOTE"/>
       </item>
       <item>
@@ -1428,26 +1476,22 @@
   </rule>
   <rule id="rfc3501_media-message" postprocess="tag">
     <ruleRef uri="DQUOTE"/>
-    <tag name="xx_symbol">
-      <replace value="MESSAGE">
-        <literal value="MESSAGE"/>
-      </replace>
-    </tag>
+    <replace value="MESSAGE">
+      <literal value="MESSAGE"/>
+    </replace>
     <ruleRef uri="DQUOTE"/>
     <ruleRef uri="SP"/>
     <ruleRef uri="DQUOTE"/>
-    <tag name="xx_symbol">
-      <replace value="RFC822">
-        <literal value="RFC822"/>
-      </replace>
-    </tag>
+    <replace value="RFC822">
+      <literal value="RFC822"/>
+    </replace>
     <ruleRef uri="DQUOTE"/>
   </rule>
   <rule id="rfc3501_media-subtype">
     <ruleRef uri="rfc3501_string"/>
   </rule>
   <rule id="rfc3501_media-text">
-    <tag name="media-text">
+    <tag name="text">
       <ruleRef uri="DQUOTE"/>
       <ignore>
         <literal value="TEXT"/>
@@ -1465,7 +1509,7 @@
       <ruleRef uri="SP"/>
       <oneOf>
         <item>
-          <tag name="xx_symbol">
+          <tag name="action">
             <replace value="EXPUNGE">
               <literal value="EXPUNGE"/>
             </replace>
@@ -1509,25 +1553,23 @@
     </ignore>
   </rule>
   <rule id="rfc3501_msg-att-dynamic">
-    <tag name="flags">
-      <ignore>
-        <literal value="FLAGS"/>
-      </ignore>
-      <ruleRef uri="SP"/>
-      <ignore>
-        <literal value="("/>
-      </ignore>
-      <optional>
+    <ignore>
+      <literal value="FLAGS"/>
+    </ignore>
+    <ruleRef uri="SP"/>
+    <ignore>
+      <literal value="("/>
+    </ignore>
+    <optional>
+      <ruleRef uri="rfc3501_flag-fetch"/>
+      <many>
+        <ruleRef uri="SP"/>
         <ruleRef uri="rfc3501_flag-fetch"/>
-        <many>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_flag-fetch"/>
-        </many>
-      </optional>
-      <ignore>
-        <literal value=")"/>
-      </ignore>
-    </tag>
+      </many>
+    </optional>
+    <ignore>
+      <literal value=")"/>
+    </ignore>
   </rule>
   <rule id="rfc3501_msg-att-static">
     <oneOf>
@@ -1597,7 +1639,7 @@
           </ignore>
         </optional>
         <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_body"/>
+        <ruleRef uri="rfc3501_body-top-level"/>
       </item>
       <item>
         <ignore>
@@ -1614,18 +1656,14 @@
           </ignore>
         </optional>
         <ruleRef uri="SP"/>
-        <tag name="rfc822_raw">
-          <ruleRef uri="rfc3501_nstring"/>
-        </tag>
+        <ruleRef uri="rfc3501_nstring"/>
       </item>
       <item>
-        <tag name="uid">
-          <ignore>
-            <literal value="UID"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_uniqueid"/>
-        </tag>
+        <ignore>
+          <literal value="UID"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_uniqueid"/>
       </item>
     </oneOf>
   </rule>
@@ -1675,7 +1713,7 @@
     </many>
     <ruleRef uri="DQUOTE"/>
   </rule>
-  <rule id="rfc3501_QUOTED-CHAR">
+  <rule id="rfc3501_QUOTED-CHAR" postprocess="tag">
     <oneOf>
       <item>
         <!--any TEXT-CHAR except quoted-specials-->
@@ -1789,25 +1827,13 @@
   <rule id="rfc3501_response-tagged" postprocess="tag">
     <ruleRef uri="rfc3501_tag"/>
     <ruleRef uri="SP"/>
-    <ruleRef uri="rfc3501_resp-cond-state"/>
+    <ruleRef uri="rfc3501_resp-cond-state-final"/>
     <ruleRef uri="CRLF"/>
   </rule>
   <rule id="rfc3501_resp-cond-auth" postprocess="tag">
-    <!-- TODO might need more work -->
-    <oneOf>
-      <item>
-        <ignore>
-          <literal value="OK"/>
-        </ignore>
-      </item>
-      <item>
-        <ignore>
-          <literal value="PREAUTH"/>
-        </ignore>
-      </item>
-    </oneOf>
+    <ruleRef uri="rfc3501_resp-cond-auth-prefix"/>
     <ruleRef uri="SP"/>
-    <ruleRef uri="rfc3501_resp-text"/>
+    <ruleRef uri="rfc3501_resp-text-tagless"/>
   </rule>
   <rule id="rfc3501_resp-cond-bye" postprocess="tag">
     <!-- TODO might need more work -->
@@ -1817,30 +1843,10 @@
     <ruleRef uri="SP"/>
     <ruleRef uri="rfc3501_resp-text"/>
   </rule>
-  <rule id="rfc3501_resp-cond-state" postprocess="tag">
-    <oneOf>
-      <item>
-        <tag name="xx_response_ok">
-          <ignore>
-            <literal value="OK"/>
-          </ignore>
-        </tag>
-      </item>
-      <item>
-        <tag name="xx_response_no">
-          <ignore>
-            <literal value="NO"/>
-          </ignore>
-        </tag>
-      </item>
-      <item>
-        <tag name="xx_response_bad">
-          <ignore>
-            <literal value="BAD"/>
-          </ignore>
-        </tag>
-      </item>
-    </oneOf>
+  <rule id="rfc3501_resp-cond-state" postprocess="ignore">
+    <ignore>
+      <ruleRef uri="rfc3501_response_codes"/>
+    </ignore>
     <ruleRef uri="SP"/>
     <ruleRef uri="rfc3501_resp-text"/>
   </rule>
@@ -1850,46 +1856,51 @@
     </ignore>
   </rule>
   <rule id="rfc3501_resp-text" postprocess="tag">
-    <optional>
-      <ignore>
-        <literal value="["/>
-      </ignore>
-      <ruleRef uri="rfc3501_resp-text-code"/>
-      <ignore>
-        <literal value="]"/>
-      </ignore>
-      <ruleRef uri="SP"/>
-    </optional>
-    <ruleRef uri="rfc3501_text"/>
+    <ruleRef uri="rfc3501_resp-text-tagless"/>
   </rule>
   <rule id="rfc3501_resp-text-code" postprocess="tag">
+    <!-- TODO refactor this -->
     <oneOf>
       <item>
-        <literal value="ALERT"/>
+        <replace value="ALERT">
+          <literal value="ALERT"/>
+        </replace>
       </item>
       <item>
-        <literal value="BADCHARSET"/>
+        <ignore>
+          <literal value="BADCHARSET"/>
+        </ignore>
         <optional>
           <ruleRef uri="SP"/>
-          <literal value="("/>
+          <ignore>
+            <literal value="("/>
+          </ignore>
           <ruleRef uri="rfc3501_astring"/>
           <many>
             <ruleRef uri="SP"/>
             <ruleRef uri="rfc3501_astring"/>
           </many>
-          <literal value=")"/>
+          <ignore>
+            <literal value=")"/>
+          </ignore>
         </optional>
       </item>
       <item>
         <ruleRef uri="rfc3501_capability-data"/>
       </item>
       <item>
-        <literal value="PARSE"/>
+        <replace value="PARSE">
+          <literal value="PARSE"/>
+        </replace>
       </item>
       <item>
-        <literal value="PERMANENTFLAGS"/>
+        <ignore>
+          <literal value="PERMANENTFLAGS"/>
+        </ignore>
         <ruleRef uri="SP"/>
-        <literal value="("/>
+        <ignore>
+          <literal value="("/>
+        </ignore>
         <optional>
           <ruleRef uri="rfc3501_flag-perm"/>
           <many>
@@ -1897,19 +1908,29 @@
             <ruleRef uri="rfc3501_flag-perm"/>
           </many>
         </optional>
-        <literal value=")"/>
+        <ignore>
+          <literal value=")"/>
+        </ignore>
       </item>
       <item>
-        <literal value="READ-ONLY"/>
+        <replace value="READ-ONLY">
+          <literal value="READ-ONLY"/>
+        </replace>
       </item>
       <item>
-        <literal value="READ-WRITE"/>
+        <replace value="READ-WRITE">
+          <literal value="READ-WRITE"/>
+        </replace>
       </item>
       <item>
-        <literal value="TRYCREATE"/>
+        <replace value="TRYCREATE">
+          <literal value="TRYCREATE"/>
+        </replace>
       </item>
       <item>
-        <literal value="UIDNEXT"/>
+        <ignore>
+          <literal value="UIDNEXT"/>
+        </ignore>
         <ruleRef uri="SP"/>
         <ruleRef uri="rfc3501_nz-number"/>
       </item>
@@ -1919,7 +1940,9 @@
         <ruleRef uri="rfc3501_nz-number"/>
       </item>
       <item>
-        <literal value="UNSEEN"/>
+        <ignore>
+          <literal value="UNSEEN"/>
+        </ignore>
         <ruleRef uri="SP"/>
         <ruleRef uri="rfc3501_nz-number"/>
       </item>
@@ -1953,14 +1976,12 @@
       <literal value="SEARCH"/>
     </ignore>
     <optional>
-      <tag name="charset">
-        <ruleRef uri="SP"/>
-        <ignore>
-          <literal value="CHARSET"/>
-        </ignore>
-        <ruleRef uri="SP"/>
-        <ruleRef uri="rfc3501_astring"/>
-      </tag>
+      <ruleRef uri="SP"/>
+      <ignore>
+        <literal value="CHARSET"/>
+      </ignore>
+      <ruleRef uri="SP"/>
+      <ruleRef uri="rfc3501_astring"/>
     </optional>
     <manyOne>
       <ruleRef uri="SP"/>
@@ -1970,321 +1991,237 @@
   <rule id="rfc3501_search-key" postprocess="tag">
     <oneOf>
       <item>
-        <tag name="xx_symbol">
-          <replace value="ALL">
-            <literal value="ALL"/>
-          </replace>
-        </tag>
+        <replace value="ALL">
+          <literal value="ALL"/>
+        </replace>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="ANSWERED">
-            <literal value="ANSWERED"/>
-          </replace>
-        </tag>
+        <replace value="ANSWERED">
+          <literal value="ANSWERED"/>
+        </replace>
       </item>
       <item>
-        <tag name="bcc">
-          <ignore>
-            <literal value="BCC"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_astring"/>
-        </tag>
+        <ignore>
+          <literal value="BCC"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_astring"/>
       </item>
       <item>
-        <tag name="before">
-          <ignore>
-            <literal value="BEFORE"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_date"/>
-        </tag>
+        <ignore>
+          <literal value="BEFORE"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_date"/>
       </item>
       <item>
-        <tag name="body">
-          <literal value="BODY"/>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_astring"/>
-        </tag>
+        <literal value="BODY"/>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_astring"/>
       </item>
       <item>
-        <tag name="cc">
-          <ignore>
-            <literal value="CC"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_astring"/>
-        </tag>
+        <ignore>
+          <literal value="CC"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_astring"/>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="DELETED">
-            <literal value="DELETED"/>
-          </replace>
-        </tag>
+        <replace value="DELETED">
+          <literal value="DELETED"/>
+        </replace>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="FLAGGED">
-            <literal value="FLAGGED"/>
-          </replace>
-        </tag>
+        <replace value="FLAGGED">
+          <literal value="FLAGGED"/>
+        </replace>
       </item>
       <item>
-        <tag name="from">
-          <ignore>
-            <literal value="FROM"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_astring"/>
-        </tag>
+        <ignore>
+          <literal value="FROM"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_astring"/>
       </item>
       <item>
-        <tag name="keyword">
-          <literal value="KEYWORD"/>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_flag-keyword"/>
-        </tag>
+        <literal value="KEYWORD"/>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_flag-keyword"/>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="NEW">
-            <literal value="NEW"/>
-          </replace>
-        </tag>
+        <replace value="NEW">
+          <literal value="NEW"/>
+        </replace>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="OLD">
-            <literal value="OLD"/>
-          </replace>
-        </tag>
+        <replace value="OLD">
+          <literal value="OLD"/>
+        </replace>
       </item>
       <item>
-        <tag name="on">
-          <ignore>
-            <literal value="ON"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_date"/>
-        </tag>
+        <ignore>
+          <literal value="ON"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_date"/>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="RECENT">
-            <literal value="RECENT"/>
-          </replace>
-        </tag>
+        <replace value="RECENT">
+          <literal value="RECENT"/>
+        </replace>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="SEEN">
-            <literal value="SEEN"/>
-          </replace>
-        </tag>
+        <replace value="SEEN">
+          <literal value="SEEN"/>
+        </replace>
       </item>
       <item>
-        <tag name="since">
-          <ignore>
-            <literal value="SINCE"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_date"/>
-        </tag>
+        <ignore>
+          <literal value="SINCE"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_date"/>
       </item>
       <item>
-        <tag name="subject">
-          <ignore>
-            <literal value="SUBJECT"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_astring"/>
-        </tag>
+        <ignore>
+          <literal value="SUBJECT"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_astring"/>
       </item>
       <item>
-        <tag name="text">
-          <ignore>
-            <literal value="TEXT"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_astring"/>
-        </tag>
+        <ignore>
+          <literal value="TEXT"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_astring"/>
       </item>
       <item>
-        <tag name="to">
-          <ignore>
-            <literal value="TO"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_astring"/>
-        </tag>
+        <ignore>
+          <literal value="TO"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_astring"/>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="UNANSWERED">
-            <literal value="UNANSWERED"/>
-          </replace>
-        </tag>
+        <replace value="UNANSWERED">
+          <literal value="UNANSWERED"/>
+        </replace>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="UNDELETED">
-            <literal value="UNDELETED"/>
-          </replace>
-        </tag>
+        <replace value="UNDELETED">
+          <literal value="UNDELETED"/>
+        </replace>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="UNFLAGGED">
-            <literal value="UNFLAGGED"/>
-          </replace>
-        </tag>
+        <replace value="UNFLAGGED">
+          <literal value="UNFLAGGED"/>
+        </replace>
       </item>
       <item>
-        <tag name="unkeyword">
-          <ignore>
-            <literal value="UNKEYWORD"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_flag-keyword"/>
-        </tag>
+        <ignore>
+          <literal value="UNKEYWORD"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_flag-keyword"/>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="UNSEEN">
-            <literal value="UNSEEN"/>
-          </replace>
-        </tag>
+        <replace value="UNSEEN">
+          <literal value="UNSEEN"/>
+        </replace>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="DRAFT">
-            <literal value="DRAFT"/>
-          </replace>
-        </tag>
+        <replace value="DRAFT">
+          <literal value="DRAFT"/>
+        </replace>
       </item>
       <item>
-        <tag name="header">
-          <tag name="xx_key_value_map">
-            <ignore>
-              <literal value="HEADER"/>
-            </ignore>
-            <ruleRef uri="SP"/>
-            <tag name="key">
-              <ruleRef uri="rfc3501_header-fld-name"/>
-            </tag>
-            <ruleRef uri="SP"/>
-            <tag name="value">
-              <ruleRef uri="rfc3501_astring"/>
-            </tag>
-          </tag>
-        </tag>
+        <ignore>
+          <literal value="HEADER"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_header-fld-name"/>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_astring"/>
       </item>
       <item>
-        <tag name="larger">
-          <ignore>
-            <literal value="LARGER"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_number"/>
-        </tag>
+        <ignore>
+          <literal value="LARGER"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_number"/>
       </item>
       <item>
-        <tag name="not">
-          <ignore>
-            <literal value="NOT"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_search-key"/>
-        </tag>
+        <ignore>
+          <literal value="NOT"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_search-key"/>
       </item>
       <item>
-        <tag name="or">
-          <tag name="xx_key_value_map">
-            <ignore>
-              <literal value="OR"/>
-            </ignore>
-            <ruleRef uri="SP"/>
-            <tag name="left">
-              <ruleRef uri="rfc3501_search-key"/>
-            </tag>
-            <ruleRef uri="SP"/>
-            <tag name="right">
-              <ruleRef uri="rfc3501_search-key"/>
-            </tag>
-          </tag>
-        </tag>
+        <ignore>
+          <literal value="OR"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_search-key"/>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_search-key"/>
       </item>
       <item>
-        <tag name="sent_before">
-          <ignore>
-            <literal value="SENTBEFORE"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_date"/>
-        </tag>
+        <ignore>
+          <literal value="SENTBEFORE"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_date"/>
       </item>
       <item>
-        <tag name="sent_on">
-          <ignore>
-            <literal value="SENTON"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_date"/>
-        </tag>
+        <ignore>
+          <literal value="SENTON"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_date"/>
       </item>
       <item>
-        <tag name="sent_since">
-          <ignore>
-            <literal value="SENTSINCE"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_date"/>
-        </tag>
+        <ignore>
+          <literal value="SENTSINCE"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_date"/>
       </item>
       <item>
-        <tag name="smaller">
-          <ignore>
-            <literal value="SMALLER"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_number"/>
-        </tag>
+        <ignore>
+          <literal value="SMALLER"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_number"/>
       </item>
       <item>
-        <tag name="uid">
-          <ignore>
-            <literal value="UID"/>
-          </ignore>
-          <ruleRef uri="SP"/>
-          <ruleRef uri="rfc3501_sequence-set"/>
-        </tag>
+        <ignore>
+          <literal value="UID"/>
+        </ignore>
+        <ruleRef uri="SP"/>
+        <ruleRef uri="rfc3501_sequence-set"/>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="UNDRAFT">
-            <literal value="UNDRAFT"/>
-          </replace>
-        </tag>
+        <replace value="UNDRAFT">
+          <literal value="UNDRAFT"/>
+        </replace>
       </item>
       <item>
         <ruleRef uri="rfc3501_sequence-set"/>
       </item>
       <item>
-        <tag name="search_keys">
-          <ignore>
-            <literal value="("/>
-          </ignore>
+        <ignore>
+          <literal value="("/>
+        </ignore>
+        <ruleRef uri="rfc3501_search-key"/>
+        <many>
+          <ruleRef uri="SP"/>
           <ruleRef uri="rfc3501_search-key"/>
-          <many>
-            <ruleRef uri="SP"/>
-            <ruleRef uri="rfc3501_search-key"/>
-          </many>
-          <ignore>
-            <literal value=")"/>
-          </ignore>
-        </tag>
+        </many>
+        <ignore>
+          <literal value=")"/>
+        </ignore>
       </item>
     </oneOf>
   </rule>
@@ -2302,11 +2239,9 @@
   <rule id="rfc3501_section-msgtext" postprocess="tag">
     <oneOf>
       <item>
-        <tag name="xx_symbol">
-          <replace value="HEADER">
-            <literal value="HEADER"/>
-          </replace>
-        </tag>
+        <replace value="HEADER">
+          <literal value="HEADER"/>
+        </replace>
       </item>
       <item>
         <ignore>
@@ -2314,28 +2249,22 @@
         </ignore>
         <oneOf>
           <item>
-            <tag name="header_fields">
-              <ruleRef uri="SP"/>
-              <ruleRef uri="rfc3501_header-list"/>
-            </tag>
+            <ruleRef uri="SP"/>
+            <ruleRef uri="rfc3501_header-list"/>
           </item>
           <item>
-            <tag name="header_fields_not">
-              <ignore>
-                <literal value=".NOT"/>
-              </ignore>
-              <ruleRef uri="SP"/>
-              <ruleRef uri="rfc3501_header-list"/>
-            </tag>
+            <ignore>
+              <literal value=".NOT"/>
+            </ignore>
+            <ruleRef uri="SP"/>
+            <ruleRef uri="rfc3501_header-list"/>
           </item>
         </oneOf>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <replace value="TEXT">
-            <literal value="TEXT"/>
-          </replace>
-        </tag>
+        <replace value="TEXT">
+          <literal value="TEXT"/>
+        </replace>
       </item>
     </oneOf>
   </rule>
@@ -2387,24 +2316,16 @@
         <ruleRef uri="rfc3501_nz-number"/>
       </item>
       <item>
-        <tag name="xx_symbol">
-          <literal value="*"/>
-        </tag>
+        <literal value="*"/>
       </item>
     </oneOf>
   </rule>
   <rule id="rfc3501_seq-range" postprocess="tag">
-    <tag name="xx_key_value_map">
-      <tag name="start">
-        <ruleRef uri="rfc3501_seq-number"/>
-      </tag>
-      <ignore>
-        <literal value=":"/>
-      </ignore>
-      <tag name="stop">
-        <ruleRef uri="rfc3501_seq-number"/>
-      </tag>
-    </tag>
+    <ruleRef uri="rfc3501_seq-number"/>
+    <ignore>
+      <literal value=":"/>
+    </ignore>
+    <ruleRef uri="rfc3501_seq-number"/>
   </rule>
   <rule id="rfc3501_sequence-set" postprocess="tag">
     <oneOf>
@@ -2472,9 +2393,21 @@
       </oneOf>
     </tag>
   </rule>
-  <rule id="rfc3501_status-att-list" postprocess="tag">
-    <tag name="xx_key_value_map">
-      <tag name="xx_key_value">
+  <rule id="rfc3501_status-att-list">
+    <tag name="xx_key_value_pair">
+      <tag name="xx_key_value_map">
+        <tag name="key">
+          <ruleRef uri="rfc3501_status-att"/>
+        </tag>
+        <ruleRef uri="SP"/>
+        <tag name="value">
+          <ruleRef uri="rfc3501_number"/>
+        </tag>
+      </tag>
+    </tag>
+    <many>
+      <ruleRef uri="SP"/>
+      <tag name="xx_key_value_pair">
         <tag name="xx_key_value_map">
           <tag name="key">
             <ruleRef uri="rfc3501_status-att"/>
@@ -2485,21 +2418,7 @@
           </tag>
         </tag>
       </tag>
-      <many>
-        <ruleRef uri="SP"/>
-        <tag name="xx_key_value">
-          <tag name="xx_key_value_map">
-            <tag name="key">
-              <ruleRef uri="rfc3501_status-att"/>
-            </tag>
-            <ruleRef uri="SP"/>
-            <tag name="value">
-              <ruleRef uri="rfc3501_number"/>
-            </tag>
-          </tag>
-        </tag>
-      </many>
-    </tag>
+    </many>
   </rule>
   <rule id="rfc3501_store" postprocess="tag">
     <ignore>
@@ -2687,10 +2606,10 @@
   <rule id="rfc3501_zone">
     <oneOf>
       <item>
+        <ignore>
+          <literal value="+"/>
+        </ignore>
         <tag name="xx_negate">
-          <ignore>
-            <literal value="+"/>
-          </ignore>
           <ruleRef uri="rfc3501_zone-unsigned"/>
         </tag>
       </item>
@@ -2703,6 +2622,16 @@
     </oneOf>
   </rule>
   <!-- Refactorings -->
+  <rule id="rfc3501_response-only">
+    <tag name="xx_key_value_map">
+      <tag name="payload">
+        <many>
+          <ruleRef uri="rfc3501_response-data"/>
+        </many>
+      </tag>
+      <ruleRef uri="rfc3501_response-done"/>
+    </tag>
+  </rule>
   <rule id="rfc3501_env-addresses">
     <oneOf>
       <item>
@@ -2750,6 +2679,74 @@
       <tag name="value">
         <ruleRef uri="rfc3501_string"/>
       </tag>
+    </tag>
+  </rule>
+  <rule id="rfc3501_resp-cond-auth-prefix">
+    <oneOf>
+      <item>
+        <ignore>
+          <literal value="OK"/>
+        </ignore>
+      </item>
+      <item>
+        <ignore>
+          <literal value="PREAUTH"/>
+        </ignore>
+      </item>
+    </oneOf>
+  </rule>
+  <rule id="rfc3501_resp-text-tagless">
+    <optional>
+      <ignore>
+        <literal value="["/>
+      </ignore>
+      <ruleRef uri="rfc3501_resp-text-code"/>
+      <ignore>
+        <literal value="]"/>
+      </ignore>
+      <ruleRef uri="SP"/>
+    </optional>
+    <ruleRef uri="rfc3501_text"/>
+  </rule>
+  <rule id="rfc3501_resp-cond-state-final">
+    <ruleRef uri="rfc3501_response_codes"/>
+    <ruleRef uri="SP"/>
+    <ruleRef uri="rfc3501_resp-text"/>
+  </rule>
+  <rule id="rfc3501_response_codes">
+    <oneOf>
+      <item>
+        <tag name="xx_response_ok">
+          <ignore>
+            <literal value="OK"/>
+          </ignore>
+        </tag>
+      </item>
+      <item>
+        <tag name="xx_response_no">
+          <ignore>
+            <literal value="NO"/>
+          </ignore>
+        </tag>
+      </item>
+      <item>
+        <tag name="xx_response_bad">
+          <ignore>
+            <literal value="BAD"/>
+          </ignore>
+        </tag>
+      </item>
+    </oneOf>
+  </rule>
+  <rule id="rfc3501_flag-extension-tagless">
+    <ignore>
+      <literal value="\"/>
+    </ignore>
+    <ruleRef uri="rfc3501_atom"/>
+  </rule>
+  <rule id="rfc3501_body-top-level">
+    <tag name="body">
+      <ruleRef uri="rfc3501_body"/>
     </tag>
   </rule>
   <!-- RFC 3501 -->

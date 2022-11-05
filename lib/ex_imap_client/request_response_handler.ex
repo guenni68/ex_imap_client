@@ -37,6 +37,10 @@ defmodule ExImapClient.RequestResponseHandler do
           new_queue = :queue.cons({from, new_parser}, remaining_queue)
           {:ok, {:continue, new(counter, new_queue)}}
 
+        {:partial_result, result, new_parser} ->
+          new_queue = :queue.cons({from, new_parser}, remaining_queue)
+          {:ok, {:partial_result, {from, result}, new(counter, new_queue)}}
+
         {:done, {:ok, result, ""}} ->
           {:ok, {:result, {from, result}, new(counter, remaining_queue)}}
 
@@ -60,6 +64,14 @@ defmodule ExImapClient.RequestResponseHandler do
       _ ->
         {:error, :empty_queue}
     end
+  end
+
+  def continue_conversation({counter, queue}, new_from) do
+    fun = fn {_from, parser} -> {new_from, parser} end
+
+    {:ok, new_queue} = update_head_of_queue(queue, fun)
+
+    new(counter, new_queue)
   end
 
   def get_senders({_count, queue}) do

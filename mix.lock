@@ -1,6 +1,5 @@
 %{
-  "connection": {:hex, :connection, "1.1.0", "ff2a49c4b75b6fb3e674bfc5536451607270aac754ffd1bdfe175abe4a6d7a68", [:mix], [], "hexpm", "722c1eb0a418fbe91ba7bd59a47e28008a189d47e37e0e7bb85585a016b2869c"},
   "erlsom": {:hex, :erlsom, "1.5.1", "c8fe2babd33ff0846403f6522328b8ab676f896b793634cfe7ef181c05316c03", [:rebar3], [], "hexpm", "7965485494c5844dd127656ac40f141aadfa174839ec1be1074e7edf5b4239eb"},
   "gen_state_machine": {:hex, :gen_state_machine, "3.0.0", "1e57f86a494e5c6b14137ebef26a7eb342b3b0070c7135f2d6768ed3f6b6cdff", [:mix], [], "hexpm", "0a59652574bebceb7309f6b749d2a41b45fdeda8dbb4da0791e355dd19f0ed15"},
-  "parser_builder": {:hex, :parser_builder, "1.2.0", "b4cd949abedd7e5e6078ccc91570ee4453291071ceb02edfd57f20cb7809e918", [:mix], [{:erlsom, "~> 1.5", [hex: :erlsom, repo: "hexpm", optional: false]}], "hexpm", "f720a1ffba235cea07df20b4347be8231bb4e4ffb45def4771d5c4f1094df029"},
+  "parser_builder": {:hex, :parser_builder, "1.3.0", "e5ac5cdc5656d78b44fa15184dc0566ae44aa1b2d97e8c9f9a242ed2442b6dc9", [:mix], [{:erlsom, "~> 1.5", [hex: :erlsom, repo: "hexpm", optional: false]}], "hexpm", "23ffc49e35f796739e05da068e6a549bb2bb67f9f2964da9e5687f9fd6ac58f2"},
 }

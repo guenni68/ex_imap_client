@@ -3,6 +3,7 @@ defmodule ExImapClient.RequestResponseHandlerTest do
 
   alias ExImapClient.RequestResponseHandler, as: Handler
   alias ParserBuilder.Override
+  alias ExImapClient.ResponseParser
 
   test "request response handler" do
     handler0 = Handler.new()
@@ -107,6 +108,34 @@ defmodule ExImapClient.RequestResponseHandlerTest do
     assert {_tag0, handler1} = Handler.handle_request(handler0, from1, cont0)
     assert {:ok, {:continue, handler2}} = Handler.handle_response(handler1, input1)
     assert {:ok, {:result, _result1, _handler3}} = Handler.handle_response(handler2, input2)
+  end
+
+  test "conversation" do
+    hd1 = Handler.new()
+    from = "me"
+    partial = "partial"
+    final = "final"
+
+    parser = fn overrides ->
+      ResponseParser.from_rule_name(overrides, "test_conversation1")
+      |> ResponseParser.streaming_parser("xx_partial", "xx_final")
+    end
+
+    {_tag, hd2} = Handler.handle_request(hd1, from, parser)
+
+    assert {:ok, {:partial_result, {^from, [^partial]}, hd3}} =
+             Handler.handle_response(hd2, partial)
+
+    assert {:ok, {:partial_result, {^from, [^partial]}, hd4}} =
+             Handler.handle_response(hd3, partial)
+
+    assert {:ok, {:continue, hd5}} = Handler.handle_response(hd4, "part")
+
+    assert {:ok, {:partial_result, {^from, [^partial]}, hd6}} =
+             Handler.handle_response(hd5, "ial")
+
+    assert {:ok, {:continue, hd7}} = Handler.handle_response(hd6, "fi")
+    assert {:ok, {:result, {^from, [^final]}, _hd8}} = Handler.handle_response(hd7, "nal")
   end
 
   defp make_ok_result_no_remainder() do

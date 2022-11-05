@@ -5,7 +5,7 @@ defmodule ExImapClient.MixProject do
     [
       app: :ex_imap_client,
       version: "0.1.0",
-      elixir: "~> 1.12",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps()
@@ -26,7 +26,7 @@ defmodule ExImapClient.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:parser_builder, "~> 1.2"},
+      {:parser_builder, "~> 1.3"},
       {:gen_state_machine, "~> 3.0"}
     ]
   end
