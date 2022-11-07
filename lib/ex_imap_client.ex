@@ -6,6 +6,7 @@ defmodule ExImapClient do
 
   ## example:
 
+  ```elixir
   {:ok, {identifier, greeting_from_server}} = start_connection("your_imap_server")
   login(identifier, "username", "password")
 
@@ -13,6 +14,7 @@ defmodule ExImapClient do
   examine(identifier)
 
   fetch(identifier, "1", "1")
+  ```
   """
   require Logger
 
