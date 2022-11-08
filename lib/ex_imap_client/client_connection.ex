@@ -63,37 +63,38 @@ defmodule ExImapClient.ClientConnection do
 
   @impl GenStateMachine
   def handle_event(type, payload, @disconnected, data) do
-    handle_disconnected(type, payload, data)
+    disconnected(type, payload, data)
   end
 
   @impl GenStateMachine
   def handle_event(type, payload, {@connected_tcp = conn_type, socket, handler}, data) do
-    handle_connected(type, payload, conn_type, socket, handler, data)
+    connected(type, payload, conn_type, socket, handler, data)
   end
 
   @impl GenStateMachine
   def handle_event(type, payload, {@connected_ssl = conn_type, socket, handler}, data) do
-    handle_connected(type, payload, conn_type, socket, handler, data)
+    connected(type, payload, conn_type, socket, handler, data)
   end
 
   @impl GenStateMachine
   def handle_event(type, payload, {@beginning_conversation, state}, data) do
-    handle_beginning_conversation(type, payload, state, data)
+    beginning_conversation(type, payload, state, data)
   end
 
   @impl GenStateMachine
   def handle_event(type, payload, {@continuing_conversation, token, state}, data) do
-    handle_continuing_conversation(type, payload, token, state, data)
+    continuing_conversation(type, payload, token, state, data)
   end
 
   # by state
-  defp handle_disconnected(type, payload, data)
+  defp disconnected(type, payload, data)
 
-  defp handle_disconnected(
+  defp disconnected(
          {:call, from},
          {conn_type, hostname, port},
          data
-       ) do
+       )
+       when conn_type in [@connect_tcp, @connect_ssl] do
     parser = response_parser_from_rule("greeting")
 
     {_tag, handler} =
@@ -140,9 +141,18 @@ defmodule ExImapClient.ClientConnection do
     end
   end
 
-  defp handle_connected(type, payload, conn_type, socket, handler, data)
+  defp disconnected(
+         {:call, from},
+         _payload,
+         _data
+       ) do
+    actions = [{:reply, from, {:error, @disconnected}}]
+    {:keep_state_and_data, actions}
+  end
 
-  defp handle_connected({:call, from}, {:send, command_string}, conn_type, socket, handler, data) do
+  defp connected(type, payload, conn_type, socket, handler, data)
+
+  defp connected({:call, from}, {:send, command_string}, conn_type, socket, handler, data) do
     parser = response_parser_from_rule("response")
 
     {tag, new_handler} =
@@ -156,7 +166,7 @@ defmodule ExImapClient.ClientConnection do
     {:next_state, {conn_type, socket, new_handler}, data}
   end
 
-  defp handle_connected(
+  defp connected(
          {:call, from},
          {:begin_conversation, message},
          conn_type,
@@ -177,12 +187,7 @@ defmodule ExImapClient.ClientConnection do
     {:next_state, {@beginning_conversation, {conn_type, socket, new_handler}}, data}
   end
 
-  defp handle_connected({:call, from}, whatever, conn_type, socket, handler, data) do
-    actions = [{:reply, from, {:error, whatever}}]
-    {:keep_state_and_data, actions}
-  end
-
-  defp handle_connected(
+  defp connected(
          :info,
          {ssl_or_tcp, socket, response},
          conn_type,
@@ -211,20 +216,20 @@ defmodule ExImapClient.ClientConnection do
       {:error, :empty_queue} ->
         :keep_state_and_data
 
-      {:error, reason} ->
+      {:error, _reason} ->
         :keep_state_and_data
     end
   end
 
-  defp handle_connected(
+  defp connected(
          :info,
          {ssl_or_tcp_closed, socket},
          _conn_type,
          socket,
-         handler,
+         _handler,
          %{
-           hostname: hostname,
-           port: port
+           hostname: _hostname,
+           port: _port
          }
        )
        when ssl_or_tcp_closed in [:ssl_closed, :tcp_closed] do
@@ -234,14 +239,15 @@ defmodule ExImapClient.ClientConnection do
     {:next_state, @disconnected, new_data(), actions}
   end
 
-  defp handle_beginning_conversation(type, payload, state, data)
+  defp beginning_conversation(type, payload, state, data)
 
-  defp handle_beginning_conversation(
+  defp beginning_conversation(
          :info,
          {tcp_or_ssl, socket, response},
-         {conn_type, socket, handler} = state,
+         {conn_type, socket, handler},
          data
-       ) do
+       )
+       when tcp_or_ssl in [:tcp, :ssl] do
     case Handler.handle_response(handler, response) do
       {:ok, {:partial_result, {from, result}, new_handler}} ->
         conversation_token = make_ref()
@@ -257,10 +263,10 @@ defmodule ExImapClient.ClientConnection do
     end
   end
 
-  defp handle_continuing_conversation(type, payload, token, state, data)
+  defp continuing_conversation(type, payload, token, state, data)
 
   # TODO wrap sending over socket
-  defp handle_continuing_conversation(
+  defp continuing_conversation(
          {:call, from},
          {@continue_conversation, token, message},
          token,
@@ -277,7 +283,7 @@ defmodule ExImapClient.ClientConnection do
   end
 
   # incoming response
-  defp handle_continuing_conversation(
+  defp continuing_conversation(
          :info,
          {tcp_or_ssl, socket, response},
          token,
@@ -300,33 +306,6 @@ defmodule ExImapClient.ClientConnection do
   end
 
   # helpers
-
-  defp handle_response(response, handler) do
-    ResponseTracer.trace_response(response)
-
-    case Handler.handle_response(handler, response) do
-      {:ok, {:result, {from, ast}, new_handler}} ->
-        Logger.debug("Parsed response")
-        ResponseTracer.start_new_trace()
-        actions = [{:reply, from, {:ok, ast}}]
-        {actions, new_handler}
-
-      {:ok, {:continue, new_handler}} ->
-        Logger.debug("response part received")
-        {[], new_handler}
-
-      {:ok, {:partial_result, {from, ast}, new_handler}} ->
-        actions = [{:reply, from, {:ok, ast}}]
-        {actions, new_handler}
-
-      # TODO
-      {:error, :empty_queue} ->
-        {[], handler}
-
-      {:error, reason} ->
-        {[], handler}
-    end
-  end
 
   defp response_parser_from_rule(rule_name \\ "response") do
     fn overrides ->
