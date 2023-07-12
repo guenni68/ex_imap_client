@@ -105,7 +105,12 @@ defmodule ExImapClient.ClientConnection do
       hostname
       |> String.to_charlist()
 
-    opts = [:binary, active: true]
+    opts =
+      if conn_type == @connect_ssl do
+        opts = :tls_certificate_check.options(hostname) ++ [:binary, active: true]
+      else
+        [:binary, active: true]
+      end
 
     updated_data =
       data
