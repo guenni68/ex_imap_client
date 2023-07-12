@@ -47,6 +47,7 @@ defmodule ExImapClient.MixProject do
     [
       {:parser_builder, "~> 1.3"},
       {:gen_state_machine, "~> 3.0"},
+      {:tls_certificate_check, "~> 1.19"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
